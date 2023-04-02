@@ -2,5 +2,7 @@
     "trees": true,
     "showInventory": true,
     "sounds": true,
-    "directionalShaders": true
+    "directionalShaders": true,
+    "fps_counter_enabled": true,
+    "treesCount": 5
 }

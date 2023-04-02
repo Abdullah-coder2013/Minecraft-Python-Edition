@@ -6,6 +6,7 @@ import random
 import sys
 import math
 import json
+from ursina.prefabs.panel import Panel
 
 
 
@@ -27,6 +28,9 @@ terrainblocks = []
 player.scale = 1
 player.y = 50
 block_id = 1
+o = Panel(scale=5)
+o.visible = False
+inventorytrue = "i"
 bgmusic = [Audio("assets/music/calm1.ogg", loop=True, autoplay=False),
            Audio("assets/music/calm2.ogg", loop=True, autoplay=False),
            Audio("assets/music/calm3.ogg", loop=True, autoplay=False),
@@ -35,9 +39,12 @@ bgmusic = [Audio("assets/music/calm1.ogg", loop=True, autoplay=False),
            Audio("assets/music/hal4.ogg", loop=True, autoplay=False),
            ]
 bgumusic = random.choice(bgmusic)
+bgumusic.play()
 # bgmusic.autoplay = True
 voxels = []
 noise = PerlinNoise(octaves=3,seed=random.randint(1,1000000))
+
+terrain = Entity(model=None,collider=None)
 
 blocks = [
     ['leaves', "assets/leaves_block_tex.png", load_texture("assets/leaves_block_tex.png")],
@@ -58,6 +65,11 @@ with open("configuration.json", "r") as configuration:
     inventory = data["showInventory"]
     sounds = data["sounds"]
     directionalshaders = data["directionalShaders"]
+    treesCount = data["treesCount"]
+    fps_counter_enabled = data["fps_counter_enabled"]
+    
+if fps_counter_enabled == False:
+    window.fps_counter = False
 
 def trunk(parent):
     for __z in range(1):
@@ -95,7 +107,7 @@ def checkTree(_x, _y, _z):
 
 
 def genTrees():
-    for tree in range(5):
+    for tree in range(treesCount):
         chosenblock = random.choice(terrainblocks)
         # terrainblocks.remove(chosenblock)
         randomcoordinates = (chosenblock.x,chosenblock.z,chosenblock.y)
@@ -120,19 +132,24 @@ def whichblockami(block):
                 return eachBlock[0]
         
         except:
-            print(f"No texture on index")
-            
-
-        
-        
+            print(f"No texture on index")   
     
 def update():
+    global inventorytrue
     if held_keys['left mouse down'] or held_keys['right mouse down']:
         # punch_sound.play()
         hand.active()
     else:
         hand.passive()
 
+    # if held_keys["e"]:
+    #     application.pause()
+    #     o.visible = True
+    #     inventory.visible = True
+    #     inventory.addslots()
+    #     mouse.locked = False
+    #     mouse.visible = True
+    #     # inventorytrue = "o"
     if held_keys['escape']:
         sys.exit()
         
@@ -147,19 +164,6 @@ def update():
         player.x = 0
         player.z = 0
         Audio("assets/sounds/sh/spawn.ogg")
-        
-        
-class Side(Entity):
-    def __init__(self, x, y, z):
-        super().__init__(
-            parent=scene,
-            position=(x, y, z),
-            model="quad",
-            scale=(16, 1, 16),
-            texture=None,
-
-        )
-
 
 class Voxel(Button):
     def __init__(self, position=(0, 0, 0), texture="assets/grass_block_tex.png", **kwargs):
@@ -187,32 +191,6 @@ class Voxel(Button):
                 if sounds is True:
                     findsoundbasedontexture(blockid=block_id,mode="already",block=self.block).play()
                 destroy(self)
-
-    def create_sides(self, direction, x, y, z):
-        if direction == "north":
-            plane = Side(x=x+15, y=y, z=z)
-            plane.texture = "textures/grass_block_side.png"
-        if direction == "south":
-            plane = Side(x=x-15, y=y, z=z)
-            plane.texture = "textures/grass_block_side.png"
-        if direction == "west":
-            plane = Side(x=x, y=y, z=z+15)
-            plane.texture = "textures/grass_block_side.png"
-        if direction == "east":
-            plane = Side(x=x, y=y, z=z-15)
-            plane.texture = "textures/grass_block_side.png"
-        if direction == "up":
-            plane = Side(x=x, y=y+15, z=z)
-            plane.texture = "textures/grass_block_top.png"
-        if direction == "down":
-            plane = Side(x=x, y=y-15, z=z)
-            plane.texture = "textures/dirt.png"
-
-
-
-        
-
-
 def input(key):
     global block_id, hand
     if key.isdigit():
@@ -308,17 +286,46 @@ class Hotbar(Entity):
         planks = Item(blocks[7][2],(0.17,-0.42))
         obsidian = Item(blocks[8][2], (0.26, -0.42))
         ice = Item(blocks[9][2], (0.35, -0.42))
-    
-    
-        
-        
 
-for z in range(-10,10):
-    for x in range(-10,10):
-        y = noise([x * .02, z * .02])
-        y = math.floor(y * 7.5)
-        voxel = Voxel(position=(x,y,z))
-        terrainblocks.append(voxel)
+# for z in range(-20,20):
+#     for x in range(-20,20):
+#         y = noise([x * .02, z * .02])
+#         y = math.floor(y * 7.5)
+#         voxel = Voxel(position=(x,y,z))
+#         voxel.texture = blocks[1][2]
+#         voxel.parent = terrain
+#         terrainblocks.append(voxel)
+terrainWidth = 25
+freq = 24
+amp = 6
+for i in range(terrainWidth*terrainWidth):
+    voxel = Voxel(texture=blocks[1][2])
+    voxel.x = floor(i/terrainWidth)
+    voxel.z = floor(i % terrainWidth)
+    voxel.y = floor((noise([voxel.x/freq, voxel.z/freq]))*amp)
+    terrainblocks.append(voxel)
+    
+# for b in range(1):
+# 	for i in range(terrainWidth*terrainWidth):
+# 		voxel = Voxel(texture=blocks[2][2])
+# 		voxel.x = floor(i/terrainWidth)
+# 		voxel.z = floor(i % terrainWidth)
+# 		voxel.y = floor(((noise([voxel.x/freq, voxel.z/freq]))*amp)-(b+1))
+  
+# for d in range(1):
+# 	for i in range(terrainWidth*terrainWidth):
+# 		voxel = Voxel(texture=blocks[3][2])
+# 		voxel.x = floor(i/terrainWidth)
+# 		voxel.z = floor(i % terrainWidth)
+# 		voxel.y = floor(((noise([voxel.x/freq, voxel.z/freq]))*amp)-(d+2))
+
+if trees is True:
+    genTrees()
+      
+terrain.combine()
+print("Mesh combined successfully")
+terrain.collider = 'mesh'
+terrain.texture = blocks[1][2]
         
 if directionalshaders == True:
     DirectionalLight(parent=Voxel, y=2, z=3, shadows=True)
@@ -327,9 +334,9 @@ if inventory is True:
     hotbar = Hotbar()
     hotbar.appendItems()
     selected = Selected()
+    # inventory = Inventory()
+    # inventory.visible = False
+    inventorytrue = "i"
 hand = Hand()
-if trees is True:
-    genTrees()
+# chunk = combine(terrainblocks)
 app.run()
-
-
