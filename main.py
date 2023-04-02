@@ -188,7 +188,7 @@ class Voxel(Button):
                 Voxel(position=self.position + mouse.normal,
                       texture=blocks[block_id][2])
             if key == 'left mouse down':
-                if sounds is True:
+                if sounds == True:
                     findsoundbasedontexture(blockid=block_id,mode="already",block=self.block).play()
                 destroy(self)
 def input(key):
@@ -246,23 +246,23 @@ class Selected(Entity):
         )
     
     def adjust_position(self):
-        if block_id is 1:
+        if block_id == 1:
             self.position = Vec2(-0.35,-0.4)
-        if block_id is 2:
+        if block_id == 2:
             self.position = Vec2(-0.26, -0.4)
-        if block_id is 3:
+        if block_id == 3:
             self.position = Vec2(-0.17, -0.4)
-        if block_id is 4:
+        if block_id == 4:
             self.position = Vec2(-0.08, -0.4)
-        if block_id is 5:
+        if block_id == 5:
             self.position = Vec2(0, -0.4)
-        if block_id is 6:
+        if block_id == 6:
             self.position = Vec2(0.08, -0.4)
-        if block_id is 7:
+        if block_id == 7:
             self.position = Vec2(0.17, -0.4)
-        if block_id is 8:
+        if block_id == 8:
             self.position = Vec2(0.26, -0.4)
-        if block_id is 9:
+        if block_id == 9:
             self.position = Vec2(0.35, -0.4)
         
 
@@ -319,7 +319,7 @@ for i in range(terrainWidth*terrainWidth):
 # 		voxel.z = floor(i % terrainWidth)
 # 		voxel.y = floor(((noise([voxel.x/freq, voxel.z/freq]))*amp)-(d+2))
 
-if trees is True:
+if trees == True:
     genTrees()
       
 terrain.combine()
@@ -330,7 +330,7 @@ terrain.texture = blocks[1][2]
 if directionalshaders == True:
     DirectionalLight(parent=Voxel, y=2, z=3, shadows=True)
 
-if inventory is True:
+if inventory == True:
     hotbar = Hotbar()
     hotbar.appendItems()
     selected = Selected()
