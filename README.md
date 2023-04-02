@@ -8,8 +8,19 @@ This Minecraft clone beats of all the other Repositories I made.
 
 ## Features
 
-Trees that generate on its own.
-Real-time hotbar.
-3D textures for the hotbar.
-Random Sounds based on blocks
-Spawn and Death sounds.
+Trees that generate on their own.<br>
+Real-time hotbar.<br>
+3D textures for the hotbar.<br>
+Random Sounds based on blocks.<br>
+Spawn and Death sounds.<br>
+
+## How to play
+
+W -> forward<br>
+A -> left<br>
+S -> back<br>
+D -> right<br>
+
+T -> spawn tree<br>
+ESC -> Quit<br>
+
