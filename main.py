@@ -5,6 +5,7 @@ from ursina.shaders import basic_lighting_shader
 import random
 import sys
 import math
+import json
 
 
 
@@ -51,6 +52,12 @@ blocks = [
     ["ice", "assets/ice_block_tex.png", load_texture("assets/ice_block_tex.png")]
 ]
 
+with open("configuration.json", "r") as configuration:
+    data = json.load(configuration)
+    trees = data["trees"]
+    inventory = data["showInventory"]
+    sounds = data["sounds"]
+    directionalshaders = data["directionalShaders"]
 
 def trunk(parent):
     for __z in range(1):
@@ -90,7 +97,8 @@ def checkTree(_x, _y, _z):
 def genTrees():
     for tree in range(5):
         chosenblock = random.choice(terrainblocks)
-        randomcoordinates = (random.randint(-10,10),random.randint(-10,10),chosenblock.y)
+        # terrainblocks.remove(chosenblock)
+        randomcoordinates = (chosenblock.x,chosenblock.z,chosenblock.y)
         plantTree(_x=randomcoordinates[0], _z=randomcoordinates[1], _y=randomcoordinates[2]+1)
 
 def findsoundbasedontexture(blockid, mode, block, blocklist=blocks):
@@ -128,6 +136,8 @@ def update():
     if held_keys['escape']:
         sys.exit()
         
+    selected.adjust_position()
+        
     if held_keys["t"]:
         plantTree(round(player.x), round(player.y), round(player.z))
         
@@ -152,7 +162,7 @@ class Side(Entity):
 
 
 class Voxel(Button):
-    def __init__(self, position=(0, 0, 0), texture="assets/grass_block_tex.png"):
+    def __init__(self, position=(0, 0, 0), texture="assets/grass_block_tex.png", **kwargs):
         super().__init__(
             parent=scene,
             position=position,
@@ -169,11 +179,13 @@ class Voxel(Button):
     def input(self, key):
         if self.hovered:
             if key == 'right mouse down':
-                findsoundbasedontexture(blockid=block_id,mode="default",block=self.block).play()
+                if sounds == True:
+                   findsoundbasedontexture(blockid=block_id,mode="default",block=self.block).play()
                 Voxel(position=self.position + mouse.normal,
                       texture=blocks[block_id][2])
             if key == 'left mouse down':
-                findsoundbasedontexture(blockid=block_id,mode="already",block=self.block).play()
+                if sounds is True:
+                    findsoundbasedontexture(blockid=block_id,mode="already",block=self.block).play()
                 destroy(self)
 
     def create_sides(self, direction, x, y, z):
@@ -216,7 +228,7 @@ class Hand(Entity):
             parent=camera.ui,
             model='assets/block',
             texture=blocks[block_id][2],
-            scale=0.4,
+            scale=0.3,
             shader=basic_lighting_shader,
             rotation=Vec3(-10, -10, 10),
             position=Vec2(-0.6, -0.6)
@@ -229,6 +241,77 @@ class Hand(Entity):
     @staticmethod
     def passive():
         hand.position = Vec2(0.6, -0.6)
+        
+
+class Item(Entity):
+    def __init__(self,texture,position=(0,-0.42)):
+        super().__init__(
+            parent=camera.ui,
+            model="assets/block",
+            texture=texture,
+            scale=0.04,
+            position=Vec2(position),
+            rotation=Vec3(-10,-35,-10),
+            shader=basic_lighting_shader,
+        )
+        
+class Selected(Entity):
+    def __init__(self, position=(0, -0.4)):
+        super().__init__(
+            parent=camera.ui,
+            model="quad",
+            texture="textures/widgets/selected.png",
+            scale=0.1,
+            position=Vec2(position),
+            # rotation=Vec3(-10, -35, -10),
+            # shader=basic_lighting_shader,
+        )
+    
+    def adjust_position(self):
+        if block_id is 1:
+            self.position = Vec2(-0.35,-0.4)
+        if block_id is 2:
+            self.position = Vec2(-0.26, -0.4)
+        if block_id is 3:
+            self.position = Vec2(-0.17, -0.4)
+        if block_id is 4:
+            self.position = Vec2(-0.08, -0.4)
+        if block_id is 5:
+            self.position = Vec2(0, -0.4)
+        if block_id is 6:
+            self.position = Vec2(0.08, -0.4)
+        if block_id is 7:
+            self.position = Vec2(0.17, -0.4)
+        if block_id is 8:
+            self.position = Vec2(0.26, -0.4)
+        if block_id is 9:
+            self.position = Vec2(0.35, -0.4)
+        
+
+class Hotbar(Entity):
+    def __init__(self):
+        super().__init__(
+            parent=camera.ui,
+            model='quad',
+            scale=(0.8, 0.10, 0),
+            position=Vec2(0, -0.4),
+            texture='textures/widgets/hotbar.png'
+        )
+        
+    def appendItems(self):
+        grass = Item(blocks[1][2],(-0.35,-0.42))
+        dirt = Item(blocks[2][2],(-0.26,-0.42))
+        stone = Item(blocks[3][2],(-0.17, -0.42))
+        cobblestone = Item(blocks[4][2],(-0.08,-0.42))
+        sand = Item(blocks[5][2],(0,-0.42))
+        oak = Item(blocks[6][2],(0.08,-0.42))
+        planks = Item(blocks[7][2],(0.17,-0.42))
+        obsidian = Item(blocks[8][2], (0.26, -0.42))
+        ice = Item(blocks[9][2], (0.35, -0.42))
+    
+    
+        
+        
 
 for z in range(-10,10):
     for x in range(-10,10):
@@ -237,8 +320,16 @@ for z in range(-10,10):
         voxel = Voxel(position=(x,y,z))
         terrainblocks.append(voxel)
         
+if directionalshaders == True:
+    DirectionalLight(parent=Voxel, y=2, z=3, shadows=True)
+
+if inventory is True:
+    hotbar = Hotbar()
+    hotbar.appendItems()
+    selected = Selected()
 hand = Hand()
-genTrees()
+if trees is True:
+    genTrees()
 app.run()
 
 
