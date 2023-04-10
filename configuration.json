@@ -4,5 +4,7 @@
     "sounds": true,
     "directionalShaders": true,
     "fps_counter_enabled": true,
-    "treesCount": 5
+    "treesCount": 5,
+    "parkour_mode": false,
+    "land_size": 15
 }

@@ -1,7 +1,8 @@
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
+# from ursina.prefabs.editor_camera import EditorCamera
 from perlin_noise import PerlinNoise
-from ursina.shaders import basic_lighting_shader
+from ursina.shaders import lit_with_shadows_shader
 import random
 import sys
 import math
@@ -16,11 +17,14 @@ player = FirstPersonController()
 
 window.exit_button.visible = False
 window.fullscreen = True
+window.vsync = False
 window.borderless = False
 window.color = color.rgb(0,181,226)
 window.show_ursina_splash = True
 window.title = "Minecraft Python Edition"
 player.height = 2
+player.cursor = Entity(parent=camera.ui, model='crosshair',
+                       color=color.light_gray, scale=.008, rotation_z=45)
 player.gravity = 0.5
 # player.model = "assets/player.obj"
 # player.texture = "textures/"
@@ -67,6 +71,8 @@ with open("configuration.json", "r") as configuration:
     directionalshaders = data["directionalShaders"]
     treesCount = data["treesCount"]
     fps_counter_enabled = data["fps_counter_enabled"]
+    parkour = data["parkour_mode"]
+    landsize = data["land_size"]
     
 if fps_counter_enabled == False:
     window.fps_counter = False
@@ -175,7 +181,7 @@ class Voxel(Button):
             texture=texture,
             color=color.color(0, 0, random.uniform(0.9, 1)),
             scale=1,
-            shader=basic_lighting_shader
+            shader=lit_with_shadows_shader
         )
         
         self.block = whichblockami(self)
@@ -207,7 +213,7 @@ class Hand(Entity):
             model='assets/block',
             texture=blocks[block_id][2],
             scale=0.3,
-            shader=basic_lighting_shader,
+            shader=lit_with_shadows_shader,
             rotation=Vec3(-10, -10, 10),
             position=Vec2(-0.6, -0.6)
         )
@@ -230,7 +236,7 @@ class Item(Entity):
             scale=0.04,
             position=Vec2(position),
             rotation=Vec3(-10,-35,-10),
-            shader=basic_lighting_shader,
+            shader=lit_with_shadows_shader,
         )
         
 class Selected(Entity):
@@ -295,15 +301,20 @@ class Hotbar(Entity):
 #         voxel.texture = blocks[1][2]
 #         voxel.parent = terrain
 #         terrainblocks.append(voxel)
-terrainWidth = 25
+terrainWidth = landsize
 freq = 24
-amp = 6
+if parkour == True:
+    amp = 100
+else:
+    amp = 5
 for i in range(terrainWidth*terrainWidth):
     voxel = Voxel(texture=blocks[1][2])
     voxel.x = floor(i/terrainWidth)
     voxel.z = floor(i % terrainWidth)
     voxel.y = floor((noise([voxel.x/freq, voxel.z/freq]))*amp)
+    # voxel.parent = terrain
     terrainblocks.append(voxel)
+    
     
 # for b in range(1):
 # 	for i in range(terrainWidth*terrainWidth):
@@ -322,10 +333,10 @@ for i in range(terrainWidth*terrainWidth):
 if trees == True:
     genTrees()
       
-terrain.combine()
-print("Mesh combined successfully")
-terrain.collider = 'mesh'
-terrain.texture = blocks[1][2]
+# terrain.combine(terrainblocks)
+# print("Mesh combined successfully")
+# terrain.collider = 'mesh'
+# terrain.texture = "white_cube"
         
 if directionalshaders == True:
     DirectionalLight(parent=Voxel, y=2, z=3, shadows=True)
