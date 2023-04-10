@@ -5,6 +5,6 @@
     "directionalShaders": true,
     "fps_counter_enabled": true,
     "treesCount": 5,
-    "parkour_mode": false,
+    "parkour_mode": true,
     "land_size": 15
 }
