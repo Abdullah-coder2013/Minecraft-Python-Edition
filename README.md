@@ -43,3 +43,13 @@ It will look something like this:
 <img src="screenshots/json.png">
 
 *The parkour mode is on, that is not the default.*
+
+## Bugs
+
+* Some trees float
+* You cannot place blocks on trees
+* You can spawn inside a block. Jumping should fix the problem!
+
+### If any unexpected stuff appears feel free to make a issue about it!
+
+
