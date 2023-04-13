@@ -2,9 +2,9 @@
     "trees": true,
     "showInventory": true,
     "sounds": true,
-    "directionalShaders": true,
+    "directionalShaders": false,
     "fps_counter_enabled": true,
     "treesCount": 5,
-    "parkour_mode": true,
+    "parkour_mode": false,
     "land_size": 15
 }

@@ -1,40 +1,39 @@
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
-# from ursina.prefabs.editor_camera import EditorCamera
 from perlin_noise import PerlinNoise
 from ursina.shaders import lit_with_shadows_shader
 import random
-import sys
-import math
 import json
+import psutil
 from ursina.prefabs.panel import Panel
 
-
-
+#Initializing Game Object
 app = Ursina()
 
+#Creating the Player Object
 player = FirstPersonController()
+player.height = 2
+player.cursor = Entity(parent=camera.ui, model='quad',color=color.light_gray, scale=.008, rotation_z=45)
+player.gravity = 0.5
+# player.model = "assets/player.obj"
+# player.texture = "textures/"
+player.scale = 1
+player.y = 50
 
+# Window Settings
+window.title = "Minecraft Python Edition"
 window.exit_button.visible = False
 window.fullscreen = True
 window.vsync = False
 window.borderless = False
-window.color = color.rgb(0,181,226)
+window.color = color.rgb(0, 181, 226)
 window.show_ursina_splash = True
-window.title = "Minecraft Python Edition"
-player.height = 2
-player.cursor = Entity(parent=camera.ui, model='crosshair',
-                       color=color.light_gray, scale=.008, rotation_z=45)
-player.gravity = 0.5
-# player.model = "assets/player.obj"
-# player.texture = "textures/"
+
+# Init Variables
 terrainblocks = []
-player.scale = 1
-player.y = 50
+button_font = "font/minecraft.ttf"
+pressed = False
 block_id = 1
-o = Panel(scale=5)
-o.visible = False
-inventorytrue = "i"
 bgmusic = [Audio("assets/music/calm1.ogg", loop=True, autoplay=False),
            Audio("assets/music/calm2.ogg", loop=True, autoplay=False),
            Audio("assets/music/calm3.ogg", loop=True, autoplay=False),
@@ -44,12 +43,7 @@ bgmusic = [Audio("assets/music/calm1.ogg", loop=True, autoplay=False),
            ]
 bgumusic = random.choice(bgmusic)
 bgumusic.play()
-# bgmusic.autoplay = True
-voxels = []
 noise = PerlinNoise(octaves=3,seed=random.randint(1,1000000))
-
-terrain = Entity(model=None,collider=None)
-
 blocks = [
     ['leaves', "assets/leaves_block_tex.png", load_texture("assets/leaves_block_tex.png")],
     ["grass", "assets/grass_block_tex.png", load_texture("assets/grass_block_tex.png")],
@@ -63,6 +57,15 @@ blocks = [
     ["ice", "assets/ice_block_tex.png", load_texture("assets/ice_block_tex.png")]
 ]
 
+# Variables for F3 debug screen
+debugscreen = Entity(model=None, parent=camera.ui)
+debugscreen.visible = False
+coordinates = Text(position=Vec3(-.87, 0.44, 0),
+                   font=button_font, parent=debugscreen)
+cpu_panel = Text(position=Vec3(-.87, 0.40, 0),
+                 parent=debugscreen, font=button_font)
+
+#Importing Json
 with open("configuration.json", "r") as configuration:
     data = json.load(configuration)
     trees = data["trees"]
@@ -77,6 +80,9 @@ with open("configuration.json", "r") as configuration:
 if fps_counter_enabled == False:
     window.fps_counter = False
 
+#----------------------------------------------Function Space---------------------------------------------------
+
+#Defining Tree Structure
 def trunk(parent):
     for __z in range(1):
         for __x in range(1):
@@ -103,15 +109,6 @@ def plantTree(_x, _y, _z):
     trunk(tree)
     tree.y = 3
 
-
-def checkTree(_x, _y, _z):
-    freq = 3
-    amp = 80
-    treeChance = ((noise([_x / freq, _z / freq])) * amp)
-    if treeChance > 38:
-        plantTree(_x, _y, _z)
-
-
 def genTrees():
     for tree in range(treesCount):
         chosenblock = random.choice(terrainblocks)
@@ -119,6 +116,7 @@ def genTrees():
         randomcoordinates = (chosenblock.x,chosenblock.z,chosenblock.y)
         plantTree(_x=randomcoordinates[0], _z=randomcoordinates[1], _y=randomcoordinates[2]+1)
 
+# Finding about the blocks
 def findsoundbasedontexture(blockid, mode, block, blocklist=blocks):
     if mode == "default":
         if blocklist[blockid][0] in blocklist[blockid][1]:
@@ -138,31 +136,43 @@ def whichblockami(block):
                 return eachBlock[0]
         
         except:
-            print(f"No texture on index")   
-    
+            print(f"No texture on index")
+            
+#------------------------------------End of Function Space-------------------------------------------
+
+# Task Update  
 def update():
-    global inventorytrue
+    global inventorytrue, pressed
     if held_keys['left mouse down'] or held_keys['right mouse down']:
         # punch_sound.play()
         hand.active()
     else:
         hand.passive()
 
-    # if held_keys["e"]:
-    #     application.pause()
-    #     o.visible = True
-    #     inventory.visible = True
-    #     inventory.addslots()
-    #     mouse.locked = False
-    #     mouse.visible = True
-    #     # inventorytrue = "o"
     if held_keys['escape']:
         sys.exit()
+        
+    if held_keys['f3']:
+        if pressed == False:
+            debugscreen.visible = True
+            pressed = True
+        elif pressed == True:
+            debugscreen.visible = False
+            pressed = False
         
     selected.adjust_position()
         
     if held_keys["t"]:
         plantTree(round(player.x), round(player.y), round(player.z))
+        
+    cpu = psutil.cpu_percent()
+    ram = psutil.virtual_memory().percent
+    coordinates.text = f'Position: {round(player.x)},{round(player.y)},{round(player.z)}'
+    pid = os.getpid()
+    python_process = psutil.Process(pid)
+    memoryUse = python_process.memory_info()[0]/2.**30
+
+    cpu_panel.text = f'CPU: {cpu}% / RAM: {ram}% / Memory use: {round(memoryUse,2)} GB'
         
     if player.y < -100:
         Audio("assets/sounds/sh/die.ogg")
@@ -171,6 +181,7 @@ def update():
         player.z = 0
         Audio("assets/sounds/sh/spawn.ogg")
 
+# Defining Voxel
 class Voxel(Button):
     def __init__(self, position=(0, 0, 0), texture="assets/grass_block_tex.png", **kwargs):
         super().__init__(
@@ -191,12 +202,15 @@ class Voxel(Button):
             if key == 'right mouse down':
                 if sounds == True:
                    findsoundbasedontexture(blockid=block_id,mode="default",block=self.block).play()
-                Voxel(position=self.position + mouse.normal,
+                voxel = Voxel(position=self.position + mouse.normal,
                       texture=blocks[block_id][2])
+                terrainblocks.append(voxel)
             if key == 'left mouse down':
                 if sounds == True:
                     findsoundbasedontexture(blockid=block_id,mode="already",block=self.block).play()
                 destroy(self)
+                
+# Changing hand texture
 def input(key):
     global block_id, hand
     if key.isdigit():
@@ -205,7 +219,7 @@ def input(key):
             block_id = len(blocks) - 1
         hand.texture = blocks[block_id][2]
         
-
+# Defining Hand
 class Hand(Entity):
     def __init__(self):
         super().__init__(
@@ -226,6 +240,7 @@ class Hand(Entity):
     def passive():
         hand.position = Vec2(0.6, -0.6)
         
+#----------------------------------------------Inventory Zone-----------------------------------------
 
 class Item(Entity):
     def __init__(self,texture,position=(0,-0.42)):
@@ -293,20 +308,15 @@ class Hotbar(Entity):
         obsidian = Item(blocks[8][2], (0.26, -0.42))
         ice = Item(blocks[9][2], (0.35, -0.42))
 
-# for z in range(-20,20):
-#     for x in range(-20,20):
-#         y = noise([x * .02, z * .02])
-#         y = math.floor(y * 7.5)
-#         voxel = Voxel(position=(x,y,z))
-#         voxel.texture = blocks[1][2]
-#         voxel.parent = terrain
-#         terrainblocks.append(voxel)
+#-------------------------------------End of Inventory Zone-------------------------------------------
+
+# Terrain Generation
 terrainWidth = landsize
 freq = 24
 if parkour == True:
     amp = 100
 else:
-    amp = 5
+    amp = 6
 for i in range(terrainWidth*terrainWidth):
     voxel = Voxel(texture=blocks[1][2])
     voxel.x = floor(i/terrainWidth)
@@ -314,40 +324,15 @@ for i in range(terrainWidth*terrainWidth):
     voxel.y = floor((noise([voxel.x/freq, voxel.z/freq]))*amp)
     # voxel.parent = terrain
     terrainblocks.append(voxel)
-    
-    
-# for b in range(1):
-# 	for i in range(terrainWidth*terrainWidth):
-# 		voxel = Voxel(texture=blocks[2][2])
-# 		voxel.x = floor(i/terrainWidth)
-# 		voxel.z = floor(i % terrainWidth)
-# 		voxel.y = floor(((noise([voxel.x/freq, voxel.z/freq]))*amp)-(b+1))
-  
-# for d in range(1):
-# 	for i in range(terrainWidth*terrainWidth):
-# 		voxel = Voxel(texture=blocks[3][2])
-# 		voxel.x = floor(i/terrainWidth)
-# 		voxel.z = floor(i % terrainWidth)
-# 		voxel.y = floor(((noise([voxel.x/freq, voxel.z/freq]))*amp)-(d+2))
 
 if trees == True:
     genTrees()
-      
-# terrain.combine(terrainblocks)
-# print("Mesh combined successfully")
-# terrain.collider = 'mesh'
-# terrain.texture = "white_cube"
-        
+       
 if directionalshaders == True:
     DirectionalLight(parent=Voxel, y=2, z=3, shadows=True)
 
-if inventory == True:
-    hotbar = Hotbar()
-    hotbar.appendItems()
-    selected = Selected()
-    # inventory = Inventory()
-    # inventory.visible = False
-    inventorytrue = "i"
 hand = Hand()
-# chunk = combine(terrainblocks)
+selected = Selected()
+hotbar = Hotbar()
+hotbar.appendItems()
 app.run()
