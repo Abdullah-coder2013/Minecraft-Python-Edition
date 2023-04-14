@@ -14,11 +14,9 @@ app = Ursina()
 player = FirstPersonController()
 player.height = 2
 player.cursor = Entity(parent=camera.ui, model='quad',color=color.light_gray, scale=.008, rotation_z=45)
-player.gravity = 0.5
+player.gravity = 0.8
 # player.model = "assets/player.obj"
 # player.texture = "textures/"
-player.scale = 1
-player.y = 50
 
 # Window Settings
 window.title = "Minecraft Python Edition"
@@ -137,6 +135,27 @@ def whichblockami(block):
         
         except:
             print(f"No texture on index")
+
+# Sneaking           
+def sneak():
+    player.scale_y  = 0.90
+    player.speed = 1
+    
+# Sprinting
+def sprint():
+    camera.fov = 100
+    player.speed = 10
+    player.jumping = True
+    
+# Zooming
+def zoom():
+    camera.fov = 70
+
+# Default Function
+def default():
+    player.speed = 5
+    camera.fov = 90
+    player.scale_y = 1
             
 #------------------------------------End of Function Space-------------------------------------------
 
@@ -148,6 +167,18 @@ def update():
         hand.active()
     else:
         hand.passive()
+        
+    if held_keys["shift"]:
+        sneak()
+        
+    elif held_keys["control"] and held_keys["w"] or held_keys["control"] and held_keys["w"] and held_keys["space"]:
+        sprint()
+    
+    elif held_keys["c"]:
+        zoom()
+        
+    else:
+        default()
 
     if held_keys['escape']:
         sys.exit()

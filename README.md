@@ -27,6 +27,7 @@ D -> right<br>
 
 T -> spawn tree<br>
 ESC -> Quit<br>
+F3 -> debug screen (like Minecraft but not so much text)
 
 ## Extreme Amplified Parkour
 
