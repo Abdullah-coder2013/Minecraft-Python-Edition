@@ -14,7 +14,8 @@ app = Ursina()
 player = FirstPersonController()
 player.height = 2
 player.cursor = Entity(parent=camera.ui, model='quad',color=color.light_gray, scale=.008, rotation_z=45)
-player.gravity = 0.8
+player.gravity = 1
+player.jump_up_duration = .3
 # player.model = "assets/player.obj"
 # player.texture = "textures/"
 
@@ -171,7 +172,7 @@ def update():
     if held_keys["shift"]:
         sneak()
         
-    elif held_keys["control"] and held_keys["w"] or held_keys["control"] and held_keys["w"] and held_keys["space"]:
+    elif held_keys["control"] and held_keys["w"]:
         sprint()
     
     elif held_keys["c"]:
@@ -363,7 +364,7 @@ if directionalshaders == True:
     DirectionalLight(parent=Voxel, y=2, z=3, shadows=True)
 
 hand = Hand()
-selected = Selected()
 hotbar = Hotbar()
+selected = Selected()
 hotbar.appendItems()
 app.run()
