@@ -15,7 +15,8 @@ player = FirstPersonController()
 player.height = 2
 player.cursor = Entity(parent=camera.ui, model='quad',color=color.light_gray, scale=.008, rotation_z=45)
 player.gravity = 1
-player.jump_up_duration = .3
+player.jump_height = 1
+player.fall_after = .30
 # player.model = "assets/player.obj"
 # player.texture = "textures/"
 
@@ -75,6 +76,7 @@ with open("configuration.json", "r") as configuration:
     fps_counter_enabled = data["fps_counter_enabled"]
     parkour = data["parkour_mode"]
     landsize = data["land_size"]
+    world_type = data["world_type"]
     
 if fps_counter_enabled == False:
     window.fps_counter = False
@@ -137,6 +139,7 @@ def whichblockami(block):
         except:
             print(f"No texture on index")
 
+
 # Sneaking           
 def sneak():
     player.scale_y  = 0.90
@@ -162,13 +165,13 @@ def default():
 
 # Task Update  
 def update():
-    global inventorytrue, pressed
+    global inventorytrue, pressed, items
     if held_keys['left mouse down'] or held_keys['right mouse down']:
         # punch_sound.play()
         hand.active()
     else:
         hand.passive()
-        
+    
     if held_keys["shift"]:
         sneak()
         
@@ -205,13 +208,27 @@ def update():
     memoryUse = python_process.memory_info()[0]/2.**30
 
     cpu_panel.text = f'CPU: {cpu}% / RAM: {ram}% / Memory use: {round(memoryUse,2)} GB'
-        
+    
     if player.y < -100:
         Audio("assets/sounds/sh/die.ogg")
         player.y = 15
         player.x = 0
         player.z = 0
         Audio("assets/sounds/sh/spawn.ogg")
+        
+    # if player.y < -100:
+    #     Audio("assets/sounds/sh/die.ogg")
+    #     application.pause()
+    #     o.visible = True
+    #     dietext.visible = True
+    #     items = False
+    #     hotbar.destroyItems()
+    #     hotbar.visible = False
+    #     hand.visible = False
+    #     selected.visible = False
+    #     respawn_button = RespawnButton()
+    #     respawn_button.text_entity.font = button_font
+    #     mouse.locked = False
 
 # Defining Voxel
 class Voxel(Button):
@@ -250,6 +267,36 @@ def input(key):
         if block_id >= len(blocks):
             block_id = len(blocks) - 1
         hand.texture = blocks[block_id][2]
+        
+# Death Screen
+o = Panel(scale=4, color=color.rgba(255, 0, 0, 200))
+o.visible = False
+items = True
+dietext = Text(font=button_font, text="You Died!",
+               position=Vec2(-0.1, 0.2), color=color.white, scale=2)
+dietext.visible = False
+class RespawnButton(Button):
+    def __init__(self):
+        super().__init__(
+            text="Respawn", 
+            parent=camera.ui, 
+            model="quad",
+            texture="textures/widgets/button.png", 
+            color=color.color(0, 0, random.uniform(0.9, 1)), 
+            scale=(0.5, 0.1)
+        )
+        
+    def input(self, key):
+        if self.hovered:
+            self.texture = "textures/widgets/button_selected.png"
+            if key == "left mouse down":
+                dietext.visible = False
+                application.resume()
+                player.y = 15
+                player.x = 0
+                player.z = 0
+                Audio("assets/sounds/sh/spawn.ogg")
+                destroy(self)
         
 # Defining Hand
 class Hand(Entity):
@@ -330,16 +377,27 @@ class Hotbar(Entity):
         )
         
     def appendItems(self):
-        grass = Item(blocks[1][2],(-0.35,-0.42))
-        dirt = Item(blocks[2][2],(-0.26,-0.42))
-        stone = Item(blocks[3][2],(-0.17, -0.42))
-        cobblestone = Item(blocks[4][2],(-0.08,-0.42))
-        sand = Item(blocks[5][2],(0,-0.42))
-        oak = Item(blocks[6][2],(0.08,-0.42))
-        planks = Item(blocks[7][2],(0.17,-0.42))
-        obsidian = Item(blocks[8][2], (0.26, -0.42))
-        ice = Item(blocks[9][2], (0.35, -0.42))
+        self.grass = Item(blocks[1][2],(-0.35,-0.42))
+        self.dirt = Item(blocks[2][2],(-0.26,-0.42))
+        self.stone = Item(blocks[3][2],(-0.17, -0.42))
+        self.cobblestone = Item(blocks[4][2],(-0.08,-0.42))
+        self.sand = Item(blocks[5][2],(0,-0.42))
+        self.oak = Item(blocks[6][2],(0.08,-0.42))
+        self.planks = Item(blocks[7][2],(0.17,-0.42))
+        self.obsidian = Item(blocks[8][2], (0.26, -0.42))
+        self.ice = Item(blocks[9][2], (0.35, -0.42))
 
+    def destroyItems(self):
+        if items == False:
+            self.grass.visible = False
+            self.dirt.visible = False
+            self.stone.visible = False
+            self.cobblestone.visible = False
+            self.sand.visible = False
+            self.oak.visible = False
+            self.planks.visible = False
+            self.obsidian.visible = False
+            self.ice.visible = False
 #-------------------------------------End of Inventory Zone-------------------------------------------
 
 # Terrain Generation
@@ -348,7 +406,12 @@ freq = 24
 if parkour == True:
     amp = 100
 else:
-    amp = 6
+    amp = 5
+    
+if world_type == "super_flat":
+    amp = 0
+else:
+    amp = 5
 for i in range(terrainWidth*terrainWidth):
     voxel = Voxel(texture=blocks[1][2])
     voxel.x = floor(i/terrainWidth)
