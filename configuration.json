@@ -7,5 +7,6 @@
     "treesCount": 5,
     "parkour_mode": false,
     "land_size": 15,
-    "world_type": "default"
+    "world_type": "default",
+    "default_block": "stone"
 }

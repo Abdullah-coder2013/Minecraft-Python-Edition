@@ -14,9 +14,10 @@ app = Ursina()
 player = FirstPersonController()
 player.height = 2
 player.cursor = Entity(parent=camera.ui, model='quad',color=color.light_gray, scale=.008, rotation_z=45)
-player.gravity = 1
+player.gravity = 0.5
 player.jump_height = 1
-player.fall_after = .30
+player.fall_after = .35
+camera.y -= 0.35
 # player.model = "assets/player.obj"
 # player.texture = "textures/"
 
@@ -77,6 +78,7 @@ with open("configuration.json", "r") as configuration:
     parkour = data["parkour_mode"]
     landsize = data["land_size"]
     world_type = data["world_type"]
+    defaultblock = data["default_block"]
     
 if fps_counter_enabled == False:
     window.fps_counter = False
@@ -133,7 +135,6 @@ def whichblockami(block):
     for eachBlock in blocks:
         try:
             if f"assets/{block.texture.name}" in eachBlock[1]:
-                print(eachBlock[0])
                 return eachBlock[0]
         
         except:
@@ -142,7 +143,7 @@ def whichblockami(block):
 
 # Sneaking           
 def sneak():
-    player.scale_y  = 0.90
+    camera.y  = -0.6
     player.speed = 1
     
 # Sprinting
@@ -159,7 +160,7 @@ def zoom():
 def default():
     player.speed = 5
     camera.fov = 90
-    player.scale_y = 1
+    camera.y = -0.35
             
 #------------------------------------End of Function Space-------------------------------------------
 
@@ -186,6 +187,7 @@ def update():
 
     if held_keys['escape']:
         sys.exit()
+        
         
     if held_keys['f3']:
         if pressed == False:
@@ -232,7 +234,7 @@ def update():
 
 # Defining Voxel
 class Voxel(Button):
-    def __init__(self, position=(0, 0, 0), texture="assets/grass_block_tex.png", **kwargs):
+    def __init__(self, position=(0, 0, 0), texture=f"assets/{defaultblock}_block_tex.png", **kwargs):
         super().__init__(
             parent=scene,
             position=position,
@@ -241,7 +243,8 @@ class Voxel(Button):
             texture=texture,
             color=color.color(0, 0, random.uniform(0.9, 1)),
             scale=1,
-            shader=lit_with_shadows_shader
+            shader=lit_with_shadows_shader,
+            collider = "box"
         )
         
         self.block = whichblockami(self)
@@ -251,7 +254,7 @@ class Voxel(Button):
             if key == 'right mouse down':
                 if sounds == True:
                    findsoundbasedontexture(blockid=block_id,mode="default",block=self.block).play()
-                voxel = Voxel(position=self.position + mouse.normal,
+                voxel = Voxel(position=self.position+mouse.normal,
                       texture=blocks[block_id][2])
                 terrainblocks.append(voxel)
             if key == 'left mouse down':
