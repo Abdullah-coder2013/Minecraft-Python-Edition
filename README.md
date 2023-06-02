@@ -2,7 +2,7 @@
 
 This is a Final Update to Pyinecraft.
 This is the 5th clone of Minecraft I am trying to make.
-There are 4 Repositories in my account of minecraft clones.
+There are 4 Repositories in my account of minecraft python clones.
 
 This Minecraft clone beats of all the other Repositories I made.
 
